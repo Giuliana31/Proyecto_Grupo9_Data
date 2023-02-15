@@ -1,0 +1,75 @@
+Script: 
+--creamos un esquema
+
+create schema Encuentra_tu_Airbnb_Madrid authorization postgres;
+
+--Añadimos la estructura
+--Tabla de Host
+
+create table Encuentra_tu_Airbnb_Madrid.Host_Airbnb(
+host_id int not null, --PK
+host_name varchar (300) null,
+host_since date null,
+host_location varchar (300) null, 
+host_about varchar (300) null, 
+host_response_time varchar (300) null, 
+host_response_rate int not null, 
+host_acceptance_rate int not null,
+host_thumbnail_url varchar (300) not null, 
+host_neighbourhood varchar (300) not null, 
+host_listings_count int not null, 
+host_verifications varchar (300) not null 
+);
+
+--ahora añadimos los PK
+alter table encuentra_tu_airbnb_madrid.host_airbnb
+add constraint host_airbnb_PK primary key (host_id);
+
+--tabla de airbnb
+
+create table encuentra_tu_airbnb_madrid.airbnb(
+id int not null, --PK
+host_id int not null, --FK
+number_of_reviews int null, 
+review_scores_rating int null, 
+review_scores_accurancy int null, 
+review_scores_cleanliness int null, 
+review_scores_checkin int null, 
+review_scores_communication int null, 
+review_scores_location int null, 
+review_scores_value int null, 
+price float null, 
+weekly_price float null, 
+monthly_price float null, 
+security_deposit float null, 
+cleaning_fee float null, 
+neighbourhood_group_cleansed varchar (300) null, 
+city varchar (300) null, 
+state varchar (300) null, 
+zipcode varchar (300) null, 
+country varchar (300) null, 
+latitude float null, 
+longitude float null, 
+property_type varchar (300) null, 
+room_type varchar (300) null, 
+square_feet float null, 
+name varchar (300) null, 
+listing_url varchar (300) null, 
+cancellation_policy varchar (300) null, 
+accommodates int null, 
+bathrooms float null, 
+beds int null
+
+);
+
+--ahora añadimos los PK y FK
+
+alter table encuentra_tu_airbnb_madrid.airbnb
+add constraint airbnb_PK primary key (id);
+
+
+alter table encuentra_tu_airbnb_madrid.airbnb
+add constraint airbnb_FK foreign key (host_id)
+references encuentra_tu_airbnb_madrid.host_airbnb(host_id);
+
+
