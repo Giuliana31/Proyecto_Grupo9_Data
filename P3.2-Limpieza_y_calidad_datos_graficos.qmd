@@ -1,0 +1,88 @@
+---
+title: "Proyecto Final Aribnb"
+format: html
+editor: visual
+---
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+airbnbmadrid<-read.csv('airbnbmadrid_selected_csv.csv', sep= ",", stringsAsFactor=T)
+```
+
+```{r}
+head(airbnbmadrid)
+```
+
+```{r}
+library(tidyverse)
+library(dplyr)
+
+
+```
+
+```{r}
+boxplot(airbnbmadrid$Price)
+
+```
+
+```{r}
+ggplot(airbnbmadrid, aes(x= Property.Type, y=Price, color=Property.Type))+geom_boxplot()+
+ylab("Precio")+xlab("Tipo de Propiedad")+ggtitle("Comparación de propiedad y precio")+theme(axis.text = element_text(angle = 90), legend.position = 'none')
+```
+
+```{r}
+ggplot(airbnbmadrid, aes(x= Room.Type, y=Price, color=Room.Type))+geom_boxplot()+
+ylab("Precio")+xlab("Tipo de Habitación")+ggtitle("Comparación de habitación y precio")+theme(axis.text = element_text(angle = 90), legend.position = 'none')
+```
+
+
+```{r}
+#Igualmente procedemos a limpiar los datos de las propiedades escogidas.
+
+airbnbmadrid2<-read.csv('airbnbmadrid_selected_csv2.csv', sep= ",", stringsAsFactor=T)
+
+ggplot(airbnbmadrid2, aes(x= Property.Type, y=Price, color=Property.Type))+geom_boxplot()+
+ylab("Precio")+xlab("Tipo de Propiedad")+ggtitle("Comparación de propiedad y precio")+theme(axis.text = element_text(angle = 90), legend.position = 'none')
+
+
+```
+
+
+
+```{r}
+boxplot(airbnbmadrid2$Price, main = "Boxplot Price")
+
+```
+
+
+```{r}
+boxplot(airbnbmadrid2$Weekly.Price, main = "Boxplot Weekly Price")
+
+```
+
+```{r}
+boxplot(airbnbmadrid2$Monthly.Price.New, main = "Boxplot Monthly Price New")
+
+```
+
+```{r}
+colnames(airbnbmadrid2)
+```
+
+```{r}
+hist(airbnbmadrid2$Reviews.Mean, main = "Histoframa para Reviews Mean", xlab = "Reviews Mean", col = "pink")
+
+```
+
+```{r}
+ggplot(airbnbmadrid2, aes(x= Host.Since , y=Price, color=Property.Type))+geom_point()+
+ylab("Reviews Mean")+xlab("Neighbourhood")+ggtitle("Comparación de neigbourhood y reviews")+theme(axis.text = element_text(angle = 90), legend.position = 'none')
+
+```
