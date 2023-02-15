@@ -1,0 +1,171 @@
+---
+title: "Modelo_de_regresión_proyecto"
+format: html
+editor: visual
+---
+
+## Modelo de Regresión Lineal Airbnb Madrid
+
+Cargamos el data frame que utilizaremos para crear el modelo de regresión lineal. Estos datos ya han sido seleccionados y limpiados anteriormente.
+
+```{r}
+library(tidyverse)
+library(readxl)
+df_airbnb <- read_excel("airbnbmadrid_selected_excelfinal_v1.xlsx", col_names = TRUE)
+head(df_airbnb)
+
+names(df_airbnb)
+
+```
+
+Tenemos un total de 44 columnas en el data frame. El objetivo será crear el modelo de regresión lineal para predecir el precio de un inmueble en función de ciertas características. Para realizar el modelo tenemos que evaluar las características que aportarán valor a nuestro modelo, estas pueden ser: la ubicación "Neighbourhood Group Cleansed", tipo de habitación "Room Type", promedio de puntajes de reseñas "Reviews Mean", número de huéspedes "Accomodates", número de baños "Bathrooms" , número de habitaciones "Bedrooms" y el número de camas "Beds".
+
+En el siguiente data frame podemos observar que la zona Centro es la que mayor frecuencia de registros tiene, lo utilizaremos más adelante para la aplicación del modelo.
+
+```{r}
+length(unique(df_airbnb$`Neighbourhood Group Cleansed`))
+
+Room_number <- as.data.frame(table(df_airbnb$`Neighbourhood Group Cleansed`))
+Room_number %>% arrange(-Freq)
+
+
+```
+
+Asimismo, encontramos los precios por semana y mensual, donde algunas de las propiedades brindan descuentos. Estos precios se pueden observar en las columnas "Weekly Price New" y "Monthly Price New".
+
+Agrupamos los precios de los inmuebles según su ubicación y tipo de inmueble.
+
+```{r}
+grouped_data <- df_airbnb |> group_by(`Neighbourhood Group Cleansed`,`Room Type`) |> summarise(mean_price =mean(Price, na.rm = TRUE))
+
+grouped_data
+```
+
+En la siguiente gráfica se pueden observar los valores promedios de barrio según su tipo de habitación.
+
+```{r}
+library(ggplot2)
+library(dplyr)
+
+ggplot(grouped_data, aes(x=grouped_data$`Neighbourhood Group Cleansed`, y=grouped_data$mean_price, fill= grouped_data$`Room Type`))+
+  geom_bar(stat = "identity", position = "dodge")+
+  labs(x="Neighbourhood", y="Mean Price", fill="Room Type") + coord_flip()
+```
+
+Diagrama de cajas de precio segun el tipo de alquiler
+
+```{r}
+ggplot(df_airbnb, aes(x=`Room Type`, y=Price, colour=`Room Type`)) + geom_boxplot()
+```
+
+Evaluar variables a incluir con toda la data y observamos cuáles son las que aportan mayor valor y mejoran el coeficiente de determinación ajustado.
+
+```{r}
+model_ev_1 <- lm(log(Price) ~ Accommodates + Bedrooms + Beds + `Room Type` + `Neighbourhood Group Cleansed` + `Reviews Mean` + `Cancellation Policy`, data = df_airbnb)
+summary(model_ev_1)
+
+```
+
+```{r}
+#correlacion_full <- round(cor(df_airbnb [c("Price","Accommodates", "Bathrooms", "Bedrooms", "Beds","Room Type", "Neighbourhood Group Cleansed", "Reviews Mean", "Cancellation Policy")]),1)
+
+correlacion_full <- round(cor(df_airbnb [c("Price","Accommodates", "Bathrooms", "Bedrooms", "Beds", "Reviews Mean")]),1)
+
+print(correlacion_full)
+```
+
+Una vez identificado las variables predictoras, seleccionaremos el barrio Centro, para ello creamos un subset.
+
+```{r}
+df_centro<- subset(df_airbnb, df_airbnb$`Neighbourhood Group Cleansed`=="Centro")
+
+df_centro
+```
+
+```{r}
+
+correlacion <- round(cor(df_centro [c("Price","Accommodates", "Bathrooms", "Bedrooms", "Beds", "Reviews Mean")]),1)
+
+print(correlacion)
+```
+
+Se excluiría la variable Bathrooms, ya que no tiene correlación con la variable Price.
+
+```{r}
+
+library(GGally)
+ggpairs(df_centro,c("Price",  "Accommodates","Bedrooms","Beds", "Reviews Mean"),
+lower = list(continuous = wrap("points", alpha = 0.3,size=0.3,color='blue'))
+) 
+```
+
+Separaremos los datos de train y test. Para ello, tomamos el 70% de los datos para utilizarlos entrenamiento del modelo y el resto para evaluar la calidad del modelo.
+
+```{r}
+set.seed(1234)
+idx_1<- sample(1:nrow(df_centro), nrow(df_centro)*0.7)
+train.airbnb<- df_centro[idx_1,]
+test.airbnb<- df_centro[-idx_1,]
+```
+
+```{r}
+summary(df_centro$Price)
+```
+
+Evaluar variables a incluir con data de entrenamiento
+
+```{r}
+train.airbnb$`Room Type` <- as.factor(train.airbnb$`Room Type`)
+#train.airbnb$`Cancellation Policy` <- as.factor(train.airbnb$`Cancellation Policy`)
+
+
+levels(train.airbnb$`Room Type`)
+typeof(train.airbnb$`Room Type`[1])
+```
+
+```{r}
+
+model_ev <- lm(Price ~ Accommodates + Bedrooms +  Beds + `Room Type` , data = train.airbnb)
+summary(model_ev)
+
+
+model_ev$coefficients
+```
+
+```{r}
+# Forma manual. Ejemplo precio alquiler en el Centro para 2 personas, 1 habitacion, 2 camas, Tipo Private Room 
+
+paste("El precio de alquiler según las características mencionadas es de ", round(52.91540  + 2*4.73735 + 1*11.23608 - 2*1.64782 -1*32.38950,2), "EUR")
+
+
+```
+
+Calculamos las figuras de calidad de training y testing.
+
+```{r}
+
+train.airbnb$Price_est <- predict(model_ev, train.airbnb)
+caret::postResample(pred=train.airbnb$Price_est, obs = train.airbnb$Price)
+```
+
+```{r}
+test.airbnb$Price_est <- predict(model_ev, test.airbnb)
+caret::postResample(pred=test.airbnb$Price_est, obs = test.airbnb$Price)
+```
+
+Luego de evaluar diferentes variables se ha mejorado el valor del coeficiente de determinación, aún así no llega a tener un valor que sea aceptable para aprobar el modelo, pasamos a evaluar el residuo o error del modelo el cual se asemeja a la campana de Gauss.
+
+```{r}
+
+ggplot(test.airbnb,aes(x=Price- Price_est)) + geom_histogram(color='black',fill='orange')+ggtitle("Residuos del testing")
+```
+
+```{r}
+quantile(test.airbnb$Price-test.airbnb$Price_est, c(0.025,0.25,0.50,0.75,0.975))
+```
+
+```{r}
+ggplot(test.airbnb, aes(x=Price, y=Price-Price_est))+
+  geom_point(color='black')+ggtitle("Residuos en testing")+
+  geom_hline(yintercept = 0, color='red')
+```
